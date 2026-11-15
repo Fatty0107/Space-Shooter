@@ -457,7 +457,7 @@ function draw(dt) {
   }
   for (const particle of game.particles) { ctx.globalAlpha = Math.max(0, particle.life / particle.maxLife); ctx.fillStyle = particle.color; ctx.beginPath(); ctx.arc(particle.x, particle.y, particle.size * (particle.life / particle.maxLife), 0, Math.PI * 2); ctx.fill(); }
   ctx.globalAlpha = 1;
-  for (const text of game.texts) { ctx.globalAlpha = Math.max(0, text.life / text.maxLife); ctx.fillStyle = text.color; ctx.font = '500 13px "DM Mono", monospace'; ctx.textAlign = 'center'; ctx.fillText(text.value, text.x, text.y); }
+  for (const text of game.texts) { ctx.globalAlpha = Math.max(0, text.life / text.maxLife); ctx.fillStyle = text.color; ctx.font = '13px "Quantum", sans-serif'; ctx.textAlign = 'center'; ctx.fillText(text.value, text.x, text.y); }
   ctx.globalAlpha = 1;
   const p = game.player;
   if (mode === 'playing' && !(p.invulnerable > 0 && Math.floor(game.time * 15) % 2 === 0)) drawShip(p.x, p.y, 1, true);

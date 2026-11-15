@@ -34,3 +34,7 @@ npm run build
 ```
 
 This project is configured for static Vercel deployment.
+
+## Typeface
+
+Display lettering uses **Quantum** by Gregory “Seso” Ortiz. The supplied font file is included in `public/fonts/Quantum.otf`; the font is listed as free for personal and commercial use by [Pixel Surplus](https://pixelsurplus.com/products/quantum-free-font).
