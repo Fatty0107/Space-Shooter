@@ -2,121 +2,101 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <meta name="theme-color" content="#080d18" />
-    <meta name="description" content="Fly, blast through the asteroid belt, and see how long you can survive in Starfall — a fast arcade space shooter." />
+    <meta name="description" content="Fly, blast through the asteroid belt, and see how long you can survive in Starfall — a full-screen arcade space shooter." />
     <title>Starfall — Space Shooter</title>
   </head>
   <body>
     <div class="app-shell">
-      <header class="topbar">
-        <a class="brand" href="#top" aria-label="Starfall home">
-          <span class="brand-mark" aria-hidden="true"><i></i><b></b></span>
-          <span>STARFALL<span class="brand-slash">/</span><small>ARCADE</small></span>
-        </a>
-        <div class="topbar-right">
-          <span class="live-status"><span class="live-dot"></span> FLIGHT SYSTEMS ONLINE</span>
-          <button class="icon-button" id="sound-button" type="button" aria-label="Turn sound off" title="Toggle sound">
-            <svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9a5 5 0 0 1 0 6M18.5 6.5a9 9 0 0 1 0 11"/></svg>
-          </button>
-        </div>
-      </header>
-
-      <main id="top">
-        <section class="intro-row" aria-label="Game introduction">
-          <div>
-            <p class="eyebrow"><span>SECTOR 07</span><span class="eyebrow-line"></span><span>DEEP SPACE</span></p>
-            <h1>THE LAST <em>FRONTIER</em></h1>
+      <main class="game-layout" aria-label="Space shooter game">
+        <section class="game-column">
+          <div class="hud-bar">
+            <div class="hud-score">
+              <span class="hud-label">SCORE</span>
+              <strong id="score-value" aria-live="polite">000000</strong>
+            </div>
+            <div class="hud-best">
+              <span class="hud-label">PERSONAL BEST</span>
+              <strong id="best-value">000000</strong>
+            </div>
+            <div class="hud-mode">
+              <span class="hud-label">FLIGHT LEVEL</span>
+              <strong id="difficulty-value">EASY</strong>
+            </div>
+            <div class="hud-lives">
+              <span class="hud-label">HULL INTEGRITY</span>
+              <div class="hearts" id="hearts" aria-label="5 hearts"></div>
+            </div>
+            <button class="icon-button sound-button" id="sound-button" type="button" aria-label="Turn sound off" title="Toggle sound">
+              <svg class="sound-on" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z"/><path d="M16 9a5 5 0 0 1 0 6M18.5 6.5a9 9 0 0 1 0 11"/></svg>
+            </button>
+            <button class="pause-button" id="pause-button" type="button" aria-label="Pause game" title="Pause (P)">
+              <span></span><span></span>
+            </button>
           </div>
-          <p class="intro-copy">Asteroids ahead. No backup in sight.<br /><strong>How long can you stay in the fight?</strong></p>
-        </section>
 
-        <section class="game-layout" aria-label="Space shooter game">
-          <div class="game-column">
-            <div class="hud-bar">
-              <div class="hud-score">
-                <span class="hud-label">SCORE</span>
-                <strong id="score-value" aria-live="polite">000000</strong>
-              </div>
-              <div class="hud-best">
-                <span class="hud-label">PERSONAL BEST</span>
-                <strong id="best-value">000000</strong>
-              </div>
-              <div class="hud-lives">
-                <span class="hud-label">HULL INTEGRITY</span>
-                <div class="hearts" id="hearts" aria-label="5 hearts"></div>
-              </div>
-              <button class="pause-button" id="pause-button" type="button" aria-label="Pause game" title="Pause (P)">
-                <span></span><span></span>
-              </button>
-            </div>
+          <div class="game-frame" id="game-frame">
+            <canvas id="game-canvas" aria-label="Space shooter playfield. Move with the arrow keys or WASD and hold space to fire. On touch screens, drag to fly and hold to fire."></canvas>
+            <div class="frame-vignette" aria-hidden="true"></div>
+            <div class="wave-label"><span class="wave-dot"></span> <span id="wave-text">SECTOR 01</span></div>
+            <div class="power-label" id="power-label" aria-live="polite"></div>
 
-            <div class="game-frame" id="game-frame">
-              <canvas id="game-canvas" aria-label="Space shooter playfield. Move with the arrow keys or WASD and hold space to fire. On touch screens, drag to fly and hold to fire."></canvas>
-              <div class="frame-vignette" aria-hidden="true"></div>
-              <div class="wave-label"><span class="wave-dot"></span> <span id="wave-text">SECTOR 01</span></div>
-              <div class="canvas-hint" id="canvas-hint"><span class="mouse-icon">↖</span> DRAG TO FLY <i></i> HOLD TO FIRE</div>
-
-              <div class="game-screen is-visible" id="start-screen" role="dialog" aria-modal="true" aria-labelledby="start-title">
-                <div class="screen-card start-card">
-                  <div class="screen-emblem"><span>✦</span></div>
-                  <p class="screen-kicker">PILOT, WE NEED YOU</p>
-                  <h2 id="start-title">READY FOR<br /><em>TAKEOFF?</em></h2>
-                  <p class="screen-copy">The belt is getting crowded.<br />Keep moving. Keep shooting.</p>
-                  <button class="primary-button" id="start-button" type="button"><span>LAUNCH MISSION</span><span class="button-arrow">↗</span></button>
-                  <p class="screen-footnote">SINGLE PLAYER <span>·</span> ENDLESS SURVIVAL</p>
+            <div class="game-screen is-visible" id="start-screen" role="dialog" aria-modal="true" aria-labelledby="start-title">
+              <div class="screen-card start-card">
+                <div class="screen-emblem"><span>✦</span></div>
+                <p class="screen-kicker">SINGLE-PILOT MISSION</p>
+                <h1 id="start-title">PICK YOUR <em>THREAT.</em></h1>
+                <p class="screen-copy">Four flight paths. Five hearts. One shot at the high-score board.</p>
+                <div class="difficulty-grid" role="group" aria-label="Choose difficulty">
+                  <button class="difficulty-button is-selected" type="button" data-difficulty="easy" aria-pressed="true"><span class="difficulty-name">EASY</span><span class="difficulty-sub">LEARN THE ROPES</span><span class="difficulty-multiplier">1× SCORE</span></button>
+                  <button class="difficulty-button" type="button" data-difficulty="medium" aria-pressed="false"><span class="difficulty-name">MEDIUM</span><span class="difficulty-sub">EVEN ODDS</span><span class="difficulty-multiplier">1.4× SCORE</span></button>
+                  <button class="difficulty-button" type="button" data-difficulty="difficult" aria-pressed="false"><span class="difficulty-name">DIFFICULT</span><span class="difficulty-sub">NO EASY TARGETS</span><span class="difficulty-multiplier">1.9× SCORE</span></button>
+                  <button class="difficulty-button" type="button" data-difficulty="impossible" aria-pressed="false"><span class="difficulty-name">IMPOSSIBLE</span><span class="difficulty-sub">GOOD LUCK, PILOT</span><span class="difficulty-multiplier">2.6× SCORE</span></button>
                 </div>
-              </div>
-
-              <div class="game-screen" id="pause-screen" role="dialog" aria-modal="true" aria-labelledby="pause-title">
-                <div class="screen-card compact-card">
-                  <p class="screen-kicker">FLIGHT PAUSED</p>
-                  <h2 id="pause-title">TAKE A <em>BREATHER.</em></h2>
-                  <p class="screen-copy">Your ship is holding position.</p>
-                  <button class="primary-button" id="resume-button" type="button"><span>RESUME FLIGHT</span><span class="button-arrow">↗</span></button>
-                  <p class="screen-footnote">PRESS <kbd>P</kbd> TO RESUME</p>
-                </div>
-              </div>
-
-              <div class="game-screen" id="over-screen" role="dialog" aria-modal="true" aria-labelledby="over-title">
-                <div class="screen-card compact-card">
-                  <p class="screen-kicker">MISSION COMPLETE</p>
-                  <h2 id="over-title">FLIGHT <em>OVER.</em></h2>
-                  <p class="screen-copy">Final score <strong id="final-score">000000</strong><br /><span id="record-message">The stars will remember.</span></p>
-                  <button class="primary-button" id="restart-button" type="button"><span>FLY AGAIN</span><span class="button-arrow">↗</span></button>
-                  <p class="screen-footnote">YOUR BEST <span id="final-best">000000</span></p>
+                <p class="difficulty-description" id="difficulty-description">Calmer asteroid flow, slower hostiles, and more repair drops.</p>
+                <button class="primary-button" id="start-button" type="button"><span>LAUNCH MISSION</span><span class="button-arrow">↗</span></button>
+                <p class="screen-footnote">SCORE MULTIPLIERS SCALE WITH THE DANGER</p>
+                <div class="start-leaderboard">
+                  <div class="leaderboard-title"><h2>HIGH SCORES</h2><span>TOP 5</span></div>
+                  <ol id="high-score-list" aria-live="polite"></ol>
+                  <p class="leaderboard-empty" id="leaderboard-empty">Your legend starts here.</p>
                 </div>
               </div>
             </div>
 
-            <div class="control-strip">
-              <div class="keyboard-controls">
-                <span class="control-group"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>MOVE</span></span>
-                <span class="control-group"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd><span>OR</span></span>
-                <span class="control-group"><kbd class="wide-key">SPACE</kbd><span>FIRE</span></span>
+            <div class="game-screen" id="pause-screen" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+              <div class="screen-card compact-card">
+                <p class="screen-kicker">FLIGHT PAUSED <span id="pause-level">EASY</span></p>
+                <h2 id="pause-title">TAKE A <em>BREATHER.</em></h2>
+                <p class="screen-copy">Your ship is holding position.</p>
+                <button class="primary-button" id="resume-button" type="button"><span>RESUME FLIGHT</span><span class="button-arrow">↗</span></button>
+                <p class="screen-footnote">PRESS <kbd>P</kbd> TO RESUME</p>
               </div>
-              <span class="mobile-control-copy">Touch: drag to fly · hold to fire</span>
-              <span class="tip"><b>TIP</b> Never stop moving.</span>
+            </div>
+
+            <div class="game-screen" id="over-screen" role="dialog" aria-modal="true" aria-labelledby="over-title">
+              <div class="screen-card compact-card">
+                <p class="screen-kicker">MISSION COMPLETE <span id="final-level">EASY</span></p>
+                <h2 id="over-title">FLIGHT <em>OVER.</em></h2>
+                <p class="screen-copy">Final score <strong id="final-score">000000</strong><br /><span id="record-message">The stars will remember.</span></p>
+                <button class="primary-button" id="restart-button" type="button"><span>FLY AGAIN</span><span class="button-arrow">↗</span></button>
+                <button class="text-button" id="change-level-button" type="button">CHOOSE ANOTHER LEVEL</button>
+                <p class="screen-footnote">YOUR BEST <span id="final-best">000000</span></p>
+              </div>
             </div>
           </div>
 
-          <aside class="side-panel" aria-label="Mission details and high scores">
-            <div class="panel-heading"><span class="panel-icon">✳</span><div><p>MISSION BRIEF</p><span>THE ASTEROID RUN</span></div></div>
-            <p class="brief-copy">Clear the flight path and fend off the hostile fleet. Collect salvage to boost your score and repair your hull.</p>
-            <div class="mission-stats">
-              <div><span>THREATS</span><strong><i class="threat-icon alien-icon">✦</i> HOSTILES <i class="threat-icon rock-icon">⬟</i> ASTEROIDS</strong></div>
-              <div><span>SUPPLIES</span><strong><i class="supply-icon heart-icon">♥</i> HULL <i class="supply-icon bolt-icon">ϟ</i> RAPID FIRE</strong></div>
-              <div><span>BEST RUN</span><strong class="stat-score" id="brief-best">000000</strong></div>
+          <div class="control-strip">
+            <div class="keyboard-controls">
+              <span class="control-group"><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><span>MOVE</span></span>
+              <span class="control-group"><kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd><span>OR</span></span>
+              <span class="control-group"><kbd class="wide-key">SPACE</kbd><span>FIRE</span></span>
             </div>
-            <div class="leaderboard">
-              <div class="leaderboard-title"><h3>HIGH SCORES</h3><span>TOP 5</span></div>
-              <ol id="high-score-list" aria-live="polite"></ol>
-              <p class="leaderboard-empty" id="leaderboard-empty">Your legend starts here.<br />Launch a run to claim the board.</p>
-            </div>
-            <div class="panel-foot"><span class="signal-bars"><i></i><i></i><i></i><i></i></span> ALL SYSTEMS NOMINAL</div>
-          </aside>
+            <span class="mobile-control-copy">DRAG TO FLY <i></i> HOLD TO FIRE</span>
+            <span class="tip"><b>TIP</b> Keep moving.</span>
+          </div>
         </section>
-        <footer class="page-footer"><span>STARFALL <b>ARCADE</b></span><span>ONE SHIP. FIVE HEARTS. INFINITE STARS.</span><span>BUILT FOR THE BRAVE <b>✦</b></span></footer>
       </main>
     </div>
     <script type="module" src="/src/main.js"></script>

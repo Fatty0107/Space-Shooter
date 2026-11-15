@@ -1,6 +1,15 @@
 # Starfall — Space Shooter
 
-A single-player, endless survival space shooter. Fly through the asteroid belt, blast hostile ships, collect hull repairs and power-ups, and set a high score.
+A full-screen, single-player survival space shooter. Fly through the asteroid belt, blast hostile ships and bosses, collect hull repairs and temporary power-ups, and set a high score.
+
+Choose one of four flight levels before launch:
+
+- **Easy:** slower waves, lighter enemy fire, and more supplies
+- **Medium:** balanced survival run
+- **Difficult:** denser waves, faster fire, and tougher bosses
+- **Impossible:** relentless enemies, scarce supplies, and the highest score multiplier
+
+Your score multiplier increases with each level. The top five runs are saved locally with their level and date.
 
 ## Play
 

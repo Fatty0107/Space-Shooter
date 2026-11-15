@@ -9,10 +9,17 @@ const heartsEl = $('#hearts');
 const scoreList = $('#high-score-list');
 const STORE_KEY = 'starfall-high-scores-v1';
 const W = 960;
-const H = 540;
+let H = 540;
+const DIFFICULTIES = {
+  easy: { label: 'Easy', multiplier: 1, enemyInterval: 1.22, rockInterval: 1.25, enemySpeed: .78, enemyFire: 1.28, projectileSpeed: .82, enemyHp: .9, bossFirst: 60, bossRepeat: 68, bossHp: .82, pickupInterval: .78, grace: 1.5, description: 'Calmer asteroid flow, slower hostiles, and more repair drops.' },
+  medium: { label: 'Medium', multiplier: 1.4, enemyInterval: 1, rockInterval: 1, enemySpeed: 1, enemyFire: 1, projectileSpeed: 1, enemyHp: 1, bossFirst: 34, bossRepeat: 48, bossHp: 1, pickupInterval: 1, grace: 1.35, description: 'A balanced run with steady waves and reliable supplies.' },
+  difficult: { label: 'Difficult', multiplier: 1.9, enemyInterval: .76, rockInterval: .8, enemySpeed: 1.24, enemyFire: .75, projectileSpeed: 1.22, enemyHp: 1.22, bossFirst: 25, bossRepeat: 38, bossHp: 1.35, pickupInterval: 1.2, grace: 1.15, description: 'Dense waves, quicker enemies, and tougher boss encounters.' },
+  impossible: { label: 'Impossible', multiplier: 2.6, enemyInterval: .51, rockInterval: .58, enemySpeed: 1.58, enemyFire: .5, projectileSpeed: 1.62, enemyHp: 1.55, bossFirst: 17, bossRepeat: 28, bossHp: 1.85, pickupInterval: 1.45, grace: .9, description: 'Relentless swarms, heavy fire, armored enemies, and rare repairs.' },
+};
 const HEART_ICON = '<svg class="heart" viewBox="0 0 20 18" aria-hidden="true"><path d="M10 16.2 2.6 9.1C-1.2 5.5 1 1 5 .9c2.1-.1 3.5 1.1 5 3 1.5-1.9 2.9-3.1 5-3 4 .1 6.2 4.6 2.4 8.2L10 16.2Z"/></svg>';
 
 let mode = 'ready';
+let selectedDifficulty = 'easy';
 let soundEnabled = true;
 let audioContext;
 let lastTime = 0;
@@ -24,10 +31,11 @@ let game = createGame();
 let stars = Array.from({ length: 115 }, () => ({ x: Math.random() * W, y: Math.random() * H, z: .2 + Math.random() * .9, size: .3 + Math.random() * 1.2, phase: Math.random() * 6 }));
 
 function createGame() {
+  const settings = DIFFICULTIES[selectedDifficulty];
   return {
     time: 0, score: 0, lives: 5, player: { x: 135, y: H / 2, invulnerable: 0, fireDelay: 0, rapid: 0, shield: 0 },
     bullets: [], enemyBullets: [], enemies: [], rocks: [], pickups: [], particles: [], texts: [],
-    spawnTimer: .7, rockTimer: 1.3, pickupTimer: 8, nextBoss: 34, shake: 0,
+    spawnTimer: .9 * settings.enemyInterval, rockTimer: 1.2 * settings.rockInterval, pickupTimer: 7 * settings.pickupInterval, nextBoss: settings.bossFirst, shake: 0,
   };
 }
 
@@ -49,8 +57,7 @@ function renderHearts() {
 function renderLeaderboard() {
   const best = bestScores[0]?.score || 0;
   bestEl.textContent = formatScore(best);
-  $('#brief-best').textContent = formatScore(best);
-  scoreList.innerHTML = bestScores.slice(0, 5).map((entry) => `<li><span class="score-date">${escapeText(entry.date || 'PILOT')}</span><span class="score-number">${formatScore(entry.score)}</span></li>`).join('');
+  scoreList.innerHTML = bestScores.slice(0, 5).map((entry, index) => `<li><span class="score-rank">${String(index + 1).padStart(2, '0')}</span><span class="score-date">${escapeText(entry.date || 'PILOT')}</span><span class="score-level">${escapeText((entry.level || 'EASY').toUpperCase())}</span><span class="score-number">${formatScore(entry.score)}</span></li>`).join('');
   $('#leaderboard-empty').hidden = bestScores.length > 0;
 }
 
@@ -62,7 +69,6 @@ function setMode(next) {
   $('#pause-screen').classList.toggle('is-visible', next === 'paused');
   $('#over-screen').classList.toggle('is-visible', next === 'over');
   $('#pause-button').disabled = next === 'ready' || next === 'over';
-  $('#canvas-hint').style.opacity = next === 'ready' || next === 'over' ? '.7' : '0';
 }
 
 function startGame() {
@@ -71,6 +77,9 @@ function startGame() {
   keys.clear();
   pointer.down = false;
   scoreEl.textContent = formatScore(0);
+  $('#difficulty-value').textContent = DIFFICULTIES[selectedDifficulty].label.toUpperCase();
+  $('#pause-level').textContent = DIFFICULTIES[selectedDifficulty].label.toUpperCase();
+  $('#wave-text').textContent = `${DIFFICULTIES[selectedDifficulty].label.toUpperCase()} · SECTOR 01`;
   renderHearts();
   setMode('playing');
   playTone(420, .11, 'sine', .045);
@@ -87,7 +96,7 @@ function endGame() {
   setMode('over');
   const oldBest = bestScores[0]?.score || 0;
   if (game.score > 0) {
-    bestScores.push({ score: game.score, date: new Intl.DateTimeFormat(undefined, { month: 'short', day: '2-digit' }).format(new Date()).toUpperCase() });
+    bestScores.push({ score: game.score, level: selectedDifficulty, date: new Intl.DateTimeFormat(undefined, { month: 'short', day: '2-digit' }).format(new Date()).toUpperCase() });
     bestScores.sort((a, b) => b.score - a.score);
     bestScores = bestScores.slice(0, 5);
     saveScores();
@@ -95,16 +104,30 @@ function endGame() {
   renderLeaderboard();
   $('#final-score').textContent = formatScore(game.score);
   $('#final-best').textContent = formatScore(bestScores[0]?.score || 0);
+  $('#final-level').textContent = DIFFICULTIES[selectedDifficulty].label.toUpperCase();
   $('#record-message').textContent = game.score > oldBest && game.score > 0 ? 'NEW PERSONAL BEST. THE GALAXY KNOWS YOUR NAME.' : 'The stars will remember.';
   playTone(180, .45, 'sawtooth', .04);
 }
 
 function resizeCanvas() {
   const rect = canvas.getBoundingClientRect();
+  if (!rect.width || !rect.height) return;
+  const previousHeight = H;
+  H = Math.max(360, W * rect.height / rect.width);
+  const heightScale = H / previousHeight;
+  if (Math.abs(heightScale - 1) > .001) {
+    stars.forEach((star) => { star.y *= heightScale; });
+    game.player.y = mode === 'ready' || mode === 'over' ? H / 2 : game.player.y * heightScale;
+    for (const entity of [...game.enemies, ...game.rocks, ...game.pickups, ...game.enemyBullets, ...game.bullets, ...game.particles, ...game.texts]) {
+      if (Number.isFinite(entity.y)) entity.y *= heightScale;
+      if (Number.isFinite(entity.baseY)) entity.baseY *= heightScale;
+    }
+  }
   const dpr = Math.min(window.devicePixelRatio || 1, 2);
   canvas.width = Math.max(1, Math.round(rect.width * dpr));
   canvas.height = Math.max(1, Math.round(rect.height * dpr));
-  ctx.setTransform(canvas.width / W, 0, 0, canvas.height / H, 0, 0);
+  const scale = canvas.width / W;
+  ctx.setTransform(scale, 0, 0, scale, 0, 0);
 }
 
 function playTone(frequency, duration = .06, type = 'triangle', volume = .025) {
@@ -137,14 +160,16 @@ function burst(x, y, color, amount = 12, power = 150) {
 }
 
 function spawnEnemy() {
+  const settings = DIFFICULTIES[selectedDifficulty];
   const roll = Math.random();
   const type = roll < .26 ? 'scout' : roll < .55 ? 'swooper' : 'fighter';
   const y = 38 + Math.random() * (H - 76);
   const difficulty = Math.min(game.time / 100, 1.2);
-  game.enemies.push({ type, x: W + 38, y, baseY: y, age: 0, hp: type === 'fighter' ? 2 : 1, speed: 112 + Math.random() * 40 + difficulty * 43, fire: 1.8 + Math.random() * 1.5, phase: Math.random() * 7, r: type === 'fighter' ? 22 : 19 });
+  game.enemies.push({ type, x: W + 38, y, baseY: y, age: 0, hp: Math.ceil((type === 'fighter' ? 2 : 1) * settings.enemyHp), speed: (112 + Math.random() * 40 + difficulty * 43) * settings.enemySpeed, fire: (1.8 + Math.random() * 1.5) * settings.enemyFire, phase: Math.random() * 7, r: type === 'fighter' ? 22 : 19 });
 }
 
 function spawnRock() {
+  const settings = DIFFICULTIES[selectedDifficulty];
   const radius = 17 + Math.random() * 22;
   const sides = 8 + Math.floor(Math.random() * 4);
   const points = Array.from({ length: sides }, (_, index) => {
@@ -152,13 +177,15 @@ function spawnRock() {
     const distance = radius * (.72 + Math.random() * .34);
     return [Math.cos(angle) * distance, Math.sin(angle) * distance];
   });
-  game.rocks.push({ x: W + radius, y: Math.random() * (H - 34) + 17, r: radius, points, angle: Math.random() * 6, spin: (Math.random() - .5) * 1.4, speed: 50 + Math.random() * 80, hp: radius > 31 ? 3 : 2, maxHp: radius > 31 ? 3 : 2 });
+  game.rocks.push({ x: W + radius, y: Math.random() * (H - 34) + 17, r: radius, points, angle: Math.random() * 6, spin: (Math.random() - .5) * 1.4, speed: (50 + Math.random() * 80) * settings.enemySpeed, hp: radius > 31 ? 3 : 2, maxHp: radius > 31 ? 3 : 2 });
 }
 
 function spawnBoss() {
-  game.enemies.push({ type: 'boss', x: W + 64, y: H / 2, baseY: H / 2, age: 0, hp: 25 + Math.floor(game.time / 80) * 5, maxHp: 25 + Math.floor(game.time / 80) * 5, speed: 52, fire: 1.2, phase: 0, r: 42, entered: false });
+  const settings = DIFFICULTIES[selectedDifficulty];
+  const hp = Math.ceil((25 + Math.floor(game.time / 80) * 5) * settings.bossHp);
+  game.enemies.push({ type: 'boss', x: W + 64, y: H / 2, baseY: H / 2, age: 0, hp, maxHp: hp, speed: 52 * settings.enemySpeed, fire: 1.2 * settings.enemyFire, phase: 0, r: 42, entered: false });
   addText(W - 40, 60, '⚠ COMMANDER INBOUND', '#ff888c');
-  game.nextBoss += 48;
+  game.nextBoss += settings.bossRepeat;
   playTone(115, .5, 'sawtooth', .04);
 }
 
@@ -176,7 +203,14 @@ function shoot() {
   playTone(rapid ? 590 : 480, .05, 'triangle', .017);
 }
 
+function awardScore(basePoints) {
+  const earned = Math.round(basePoints * DIFFICULTIES[selectedDifficulty].multiplier);
+  game.score += earned;
+  return earned;
+}
+
 function update(dt) {
+  const settings = DIFFICULTIES[selectedDifficulty];
   game.time += dt;
   game.shake = Math.max(0, game.shake - dt * 22);
   const player = game.player;
@@ -199,11 +233,11 @@ function update(dt) {
   if ((keys.has(' ') || pointer.down) && player.fireDelay <= 0) shoot();
 
   game.spawnTimer -= dt;
-  if (game.spawnTimer <= 0) { spawnEnemy(); game.spawnTimer = Math.max(.38, 1.25 - game.time * .007) * (.75 + Math.random() * .5); }
+  if (game.spawnTimer <= 0) { spawnEnemy(); game.spawnTimer = Math.max(.3, 1.25 - game.time * .007) * (.75 + Math.random() * .5) * settings.enemyInterval; }
   game.rockTimer -= dt;
-  if (game.rockTimer <= 0) { spawnRock(); game.rockTimer = Math.max(.48, 1.55 - game.time * .003) * (.8 + Math.random() * .5); }
+  if (game.rockTimer <= 0) { spawnRock(); game.rockTimer = Math.max(.38, 1.55 - game.time * .003) * (.8 + Math.random() * .5) * settings.rockInterval; }
   game.pickupTimer -= dt;
-  if (game.pickupTimer <= 0) { spawnPickup(W + 10, 35 + Math.random() * (H - 70)); game.pickupTimer = 12 + Math.random() * 6; }
+  if (game.pickupTimer <= 0) { spawnPickup(W + 10, 35 + Math.random() * (H - 70)); game.pickupTimer = (12 + Math.random() * 6) * settings.pickupInterval; }
   if (game.time > game.nextBoss) spawnBoss();
 
   game.bullets.forEach((b) => { b.x += b.vx * dt; b.y += b.vy * dt; });
@@ -216,8 +250,8 @@ function update(dt) {
       e.fire -= dt;
       if (e.fire <= 0 && e.entered) {
         const angle = Math.atan2(player.y - e.y, player.x - e.x);
-        for (const offset of [-.24, 0, .24]) game.enemyBullets.push({ x: e.x - 34, y: e.y, vx: Math.cos(angle + Math.PI + offset) * 245, vy: Math.sin(angle + Math.PI + offset) * 245, r: 6 });
-        e.fire = .9;
+        for (const offset of [-.24, 0, .24]) game.enemyBullets.push({ x: e.x - 34, y: e.y, vx: Math.cos(angle + Math.PI + offset) * 245 * settings.projectileSpeed, vy: Math.sin(angle + Math.PI + offset) * 245 * settings.projectileSpeed, r: 6 });
+        e.fire = .9 * settings.enemyFire;
       }
     } else {
       e.x -= e.speed * dt;
@@ -225,8 +259,8 @@ function update(dt) {
       e.fire -= dt;
       if (e.fire <= 0 && e.x < W - 70 && Math.random() < .75) {
         const angle = Math.atan2(player.y - e.y, player.x - e.x);
-        game.enemyBullets.push({ x: e.x - 10, y: e.y, vx: Math.cos(angle) * 205, vy: Math.sin(angle) * 205, r: 4.5 });
-        e.fire = 2.2 + Math.random() * 1.5;
+        game.enemyBullets.push({ x: e.x - 10, y: e.y, vx: Math.cos(angle) * 205 * settings.projectileSpeed, vy: Math.sin(angle) * 205 * settings.projectileSpeed, r: 4.5 });
+        e.fire = (2.2 + Math.random() * 1.5) * settings.enemyFire;
       }
     }
   });
@@ -241,8 +275,8 @@ function update(dt) {
         enemy.hp -= bullet.damage; burst(bullet.x, bullet.y, '#6ee7f4', 4, 50); game.bullets.splice(bi, 1); used = true;
         if (enemy.hp <= 0) {
           const isBoss = enemy.type === 'boss';
-          const points = isBoss ? 1200 : enemy.type === 'fighter' ? 150 : enemy.type === 'swooper' ? 125 : 100;
-          game.score += points; addText(enemy.x, enemy.y, `+${points}`, isBoss ? '#ffd278' : '#73e0f0'); burst(enemy.x, enemy.y, isBoss ? '#ff9778' : '#ff6374', isBoss ? 45 : 17, isBoss ? 280 : 175); game.enemies.splice(ei, 1);
+          const points = awardScore(isBoss ? 1200 : enemy.type === 'fighter' ? 150 : enemy.type === 'swooper' ? 125 : 100);
+          addText(enemy.x, enemy.y, `+${points}`, isBoss ? '#ffd278' : '#73e0f0'); burst(enemy.x, enemy.y, isBoss ? '#ff9778' : '#ff6374', isBoss ? 45 : 17, isBoss ? 280 : 175); game.enemies.splice(ei, 1);
           if (Math.random() < (isBoss ? .85 : .12)) spawnPickup(enemy.x, enemy.y, Math.random() < .55 ? 'heart' : 'rapid');
           playTone(isBoss ? 250 : 300, .13, 'sawtooth', .028);
         } else playTone(720, .04, 'sine', .012);
@@ -254,7 +288,7 @@ function update(dt) {
       const rock = game.rocks[ri];
       if (Math.hypot(bullet.x - rock.x, bullet.y - rock.y) < rock.r + bullet.r) {
         rock.hp--; game.bullets.splice(bi, 1); used = true; burst(bullet.x, bullet.y, '#edbd92', 3, 45);
-        if (rock.hp <= 0) { game.score += 35; addText(rock.x, rock.y, '+35', '#e8bd8e'); burst(rock.x, rock.y, '#bd9677', 19, 160); game.rocks.splice(ri, 1); playTone(235, .12, 'triangle', .025); }
+        if (rock.hp <= 0) { const points = awardScore(35); addText(rock.x, rock.y, `+${points}`, '#e8bd8e'); burst(rock.x, rock.y, '#bd9677', 19, 160); game.rocks.splice(ri, 1); playTone(235, .12, 'triangle', .025); }
         break;
       }
     }
@@ -263,7 +297,7 @@ function update(dt) {
   const hit = () => {
     if (player.invulnerable > 0) return;
     if (player.shield > 0) { player.shield = 0; player.invulnerable = .55; burst(player.x, player.y, '#70dcff', 15, 180); playTone(260, .2, 'sawtooth', .03); return; }
-    game.lives--; player.invulnerable = 1.35; game.shake = 10; burst(player.x, player.y, '#ff6477', 21, 190); renderHearts(); playTone(155, .25, 'sawtooth', .05);
+    game.lives--; player.invulnerable = settings.grace; game.shake = 10; burst(player.x, player.y, '#ff6477', 21, 190); renderHearts(); playTone(155, .25, 'sawtooth', .05);
     $('#game-frame').classList.remove('shake'); void $('#game-frame').offsetWidth; $('#game-frame').classList.add('shake');
     if (game.lives <= 0) endGame();
   };
@@ -282,7 +316,7 @@ function update(dt) {
   for (let i = game.pickups.length - 1; i >= 0; i--) {
     const item = game.pickups[i];
     if (Math.hypot(item.x - player.x, item.y - player.y) < 29) {
-      game.pickups.splice(i, 1); game.score += 50;
+      game.pickups.splice(i, 1); awardScore(50);
       if (item.type === 'heart') { if (game.lives < 5) { game.lives++; addText(player.x, player.y - 25, 'HULL +1', '#ff8793'); } else addText(player.x, player.y - 25, 'FULL HULL +50', '#ff8793'); renderHearts(); }
       if (item.type === 'rapid') { player.rapid = 8; addText(player.x, player.y - 25, 'RAPID FIRE!', '#ffd178'); }
       if (item.type === 'shield') { player.shield = 7; addText(player.x, player.y - 25, 'SHIELD UP!', '#77dff5'); }
@@ -291,7 +325,11 @@ function update(dt) {
   }
   game.score = Math.floor(game.score);
   scoreEl.textContent = formatScore(game.score);
-  $('#wave-text').textContent = `SECTOR ${String(1 + Math.floor(game.time / 25)).padStart(2, '0')}`;
+  $('#wave-text').textContent = `${settings.label.toUpperCase()} · SECTOR ${String(1 + Math.floor(game.time / 25)).padStart(2, '0')}`;
+  const powerLabel = $('#power-label');
+  if (player.rapid > 0) powerLabel.textContent = `RAPID FIRE  ${Math.ceil(player.rapid)}s`;
+  else if (player.shield > 0) powerLabel.textContent = `SHIELD  ${Math.ceil(player.shield)}s`;
+  else powerLabel.textContent = '';
   game.bullets = game.bullets.filter((b) => b.x < W + 20 && b.y > -20 && b.y < H + 20);
   game.enemyBullets = game.enemyBullets.filter((b) => b.x > -20 && b.x < W + 20 && b.y > -20 && b.y < H + 20);
   game.enemies = game.enemies.filter((e) => e.x > -90);
@@ -462,6 +500,19 @@ $('#start-button').addEventListener('click', startGame);
 $('#restart-button').addEventListener('click', startGame);
 $('#resume-button').addEventListener('click', pauseGame);
 $('#pause-button').addEventListener('click', pauseGame);
+$('#change-level-button').addEventListener('click', () => setMode('ready'));
+document.querySelectorAll('.difficulty-button').forEach((button) => {
+  button.addEventListener('click', () => {
+    selectedDifficulty = button.dataset.difficulty;
+    document.querySelectorAll('.difficulty-button').forEach((option) => {
+      const selected = option === button;
+      option.classList.toggle('is-selected', selected);
+      option.setAttribute('aria-pressed', String(selected));
+    });
+    $('#difficulty-description').textContent = DIFFICULTIES[selectedDifficulty].description;
+    $('#difficulty-value').textContent = DIFFICULTIES[selectedDifficulty].label.toUpperCase();
+  });
+});
 $('#sound-button').addEventListener('click', () => {
   soundEnabled = !soundEnabled;
   $('#sound-button').classList.toggle('muted', !soundEnabled);
